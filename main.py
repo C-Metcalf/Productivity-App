@@ -4,6 +4,7 @@ import time
 import datetime
 import traceback
 import qdarktheme
+import pyqtgraph as pg
 from enum import Enum, auto
 from queue import Queue
 from random import randint
@@ -13,9 +14,10 @@ from PyQt5.QtWidgets import (
     QWidget,
     QApplication,
     QPushButton,
+    QGridLayout,
     QVBoxLayout,
-    QTextEdit,
     QHBoxLayout,
+    QTextEdit,
     QCheckBox,
     QLabel,
     QMainWindow,
@@ -35,10 +37,34 @@ class MainWindow(QMainWindow):
         super().__init__()
         # MainWindow Setup
         self.setWindowTitle("Tasks")
+        self.setFixedSize(1200, 700)
         self.home = QWidget()
         self.setCentralWidget(self.home)
+        #Main Layout
         self.layout = QVBoxLayout()
         self.home.setLayout(self.layout)
+        #Top third of the layout
+        top = QVBoxLayout()
+        self.layout.addLayout(top)
+        #middle third of the layout
+        middle = QVBoxLayout()
+        self.layout.addLayout(middle)
+        self.grid = QGridLayout()
+        self.grid.setRowMinimumHeight(0, 120)
+        self.grid.setRowMinimumHeight(1, 120)
+        middle.addLayout(self.grid)
+        #bottom thrid of the layout
+        bottom = QVBoxLayout()
+        self.layout.addLayout(bottom)
+        plot = pg.plot()
+                # create list for y-axis
+        y1 = [5, 5, 7, 10, 3, 8, 9, 1, 6, 2]
+
+                # create horizontal list i.e x-axis
+        x = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+        barGraph = pg.BarGraphItem(x = x, height = y1, width = 0.2, brush ='g')
+        plot.addItem(barGraph)
+        bottom.addWidget(plot)
         self.goalList = list()
 
         #Menu Bar Setup
@@ -65,18 +91,20 @@ class MainWindow(QMainWindow):
         date = datetime.datetime.now().date()
         week = date.isocalendar().week
 
+        #Date edit Setup
         self.dateedit = QDateEdit(calendarPopup=True)
         self.dateedit.setDateTime(QDateTime.currentDateTime())
 
-        #QButtons
-        showGoals = QPushButton("Show All Current Goals")
+        a = QLabel("1")
+        b = QLabel("2")
+        c = QLabel("3")
 
-        # QButtons Connect
-        # showGoals.clicked.connect(self.goals)
+        self.grid.addWidget(a, 0, 0)
+        self.grid.addWidget(b, 1, 0)
+        self.grid.addWidget(c, 1, 1)
 
         # Add objects to the layout
-        self.layout.addWidget(self.dateedit)
-        self.layout.addWidget(showGoals)
+        top.addWidget(self.dateedit)
 
         self.file_read()
 
@@ -85,7 +113,7 @@ class MainWindow(QMainWindow):
         if ok and Input:
             newGoal = QCheckBox(Input)
             self.goalList.append(newGoal)
-            self.layout.addWidget(self.goalList[self.goalList.__len__() - 1])
+            self.grid.addWidget(self.goalList[self.goalList.__len__() - 1], 0, 2, 1, 1)
 
     def file_save(self):
         file = open('goals.txt', 'a')
@@ -101,7 +129,6 @@ class MainWindow(QMainWindow):
             if file:
                 with file:
                     lines = len(file.readlines())
-                    print(lines)
                     i = 0
                     file.seek(0, 0) # put the pointer back to the top of the file
                     while(i != lines):
@@ -109,13 +136,18 @@ class MainWindow(QMainWindow):
                         data = data.replace('\n', '')
                         goal = QCheckBox(data)
                         goalList.append(goal)
-                        self.layout.addWidget(goalList[self.goalList.__len__() - 1])
+                        self.grid.addWidget(goalList[self.goalList.__len__() - 1], 0, 1)
                         i +=1
         except:
             print("no file")
 
     def file_delete(self):
-        os.remove("goals.txt")
+        try:
+            file = open('goals.txt', 'w')
+            file.write("")
+            file.close()
+        except:
+            print("f")
 
 qdarktheme.enable_hi_dpi()
 app = QApplication(sys.argv)
